@@ -525,8 +525,7 @@ mots-clés d'ambiance..."></textarea>
         await fetch(form.action, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-          mode: 'no-cors'
+          body: JSON.stringify(data)
         });
 
         form.style.display = 'none';
