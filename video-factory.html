@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Factory — Sora 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --noir: #0a0a0a;
+      --noir-card: #111111;
+      --noir-input: #1a1a1a;
+      --or: #c8a96e;
+      --or-light: #dfc69a;
+      --or-glow: rgba(200, 169, 110, 0.15);
+      --creme: #f5f0e8;
+      --creme-muted: #a89d8e;
+      --border: #2a2520;
+      --border-focus: #c8a96e;
+      --error: #d44;
+      --radius: 6px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--noir);
+      color: var(--creme);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Ambient glow */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -30%;
+      right: -20%;
+      width: 70vw;
+      height: 70vw;
+      background: radial-gradient(circle, rgba(200, 169, 110, 0.06) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+      animation: fadeUp 0.8s ease-out;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--or);
+      margin-bottom: 28px;
+      background: var(--or-glow);
+    }
+
+    .header-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--or);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--creme);
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .header h1 em {
+      font-style: italic;
+      color: var(--or);
+    }
+
+    .header p {
+      font-size: 15px;
+      color: var(--creme-muted);
+      font-weight: 300;
+      line-height: 1.6;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Divider */
+    .divider {
+      width: 48px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--or), transparent);
+      margin: 0 auto 48px;
+      animation: fadeUp 0.8s ease-out 0.2s both;
+    }
+
+    /* Form */
+    .form-card {
+      background: var(--noir-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px 36px;
+      animation: fadeUp 0.8s ease-out 0.3s both;
+    }
+
+    .form-section {
+      margin-bottom: 32px;
+    }
+
+    .form-section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--or);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--creme-muted);
+      margin-bottom: 8px;
+    }
+
+    label .required {
+      color: var(--or);
+      margin-left: 2px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--noir-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--creme);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: #4a4540;
+      font-weight: 300;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--or);
+      box-shadow: 0 0 0 3px var(--or-glow), inset 0 0 0 1px var(--or);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    textarea.prompt-area {
+      min-height: 200px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23c8a96e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+    }
+
+    select option {
+      background: var(--noir);
+      color: var(--creme);
+    }
+
+    /* Prompt helper */
+    .prompt-helper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #5a5550;
+    }
+
+    .prompt-helper svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--or);
+      flex-shrink: 0;
+    }
+
+    /* Submit button */
+    .submit-btn {
+      width: 100%;
+      padding: 18px 32px;
+      background: linear-gradient(135deg, var(--or) 0%, #b8944e 100%);
+      border: none;
+      border-radius: var(--radius);
+      color: var(--noir);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(200, 169, 110, 0.3);
+    }
+
+    .submit-btn:hover::before {
+      transform: translateX(100%);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Success state */
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      animation: fadeUp 0.6s ease-out;
+    }
+
+    .success-message.visible {
+      display: block;
+    }
+
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      border: 2px solid var(--or);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      animation: scaleIn 0.5s ease-out 0.2s both;
+    }
+
+    .success-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--or);
+    }
+
+    .success-message h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--creme);
+      margin-bottom: 12px;
+    }
+
+    .success-message p {
+      color: var(--creme-muted);
+      font-weight: 300;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      animation: fadeUp 0.8s ease-out 0.5s both;
+    }
+
+    .footer p {
+      font-size: 11px;
+      color: #3a3530;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .footer a {
+      color: var(--or);
+      text-decoration: none;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .page-wrapper { padding: 40px 16px 60px; }
+      .form-card { padding: 28px 20px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <header class="header">
+      <div class="header-badge">Sora 2 &middot; AI Video</div>
+      <h1>Video <em>Factory</em></h1>
+      <p>Transformez votre produit en publicité vidéo cinématique grâce à l'intelligence artificielle Sora 2.</p>
+    </header>
+
+    <div class="divider"></div>
+
+    <form id="videoForm" class="form-card" action="https://mn3labs-n8n.com/webhook/generate-video" method="POST">
+
+      <!-- Section Produit -->
+      <div class="form-section">
+        <div class="form-section-title">Produit</div>
+
+        <div class="form-group">
+          <label for="product_name">Nom du produit <span class="required">*</span></label>
+          <input type="text" id="product_name" name="product_name" required placeholder="Ex: Mini-Sac Pochette">
+        </div>
+
+        <div class="form-group">
+          <label for="product_description">Description <span class="required">*</span></label>
+          <textarea id="product_description" name="product_description" required placeholder="Décrivez votre produit : matériaux, couleurs, design..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="product_image_url">URL image produit</label>
+          <input type="text" id="product_image_url" name="product_image_url" placeholder="https://i.postimg.cc/xxxxx/image.png">
+        </div>
+      </div>
+
+      <!-- Section Créatif -->
+      <div class="form-section">
+        <div class="form-section-title">Direction Créative</div>
+
+        <div class="form-group">
+          <label for="prompt">Prompt Sora 2 <span class="required">*</span></label>
+          <textarea id="prompt" name="prompt" class="prompt-area" required placeholder="Create a cinematic luxury advertisement video for...
+
+Product:
+Description détaillée du produit...
+
+Scene style:
+Type de production (luxury, modern, lifestyle...)
+
+Video sequence:
+1. Premier plan...
+2. Deuxième plan...
+
+Visual style:
+- éclairage, ombres, profondeur de champ...
+
+Camera:
+- mouvements, objectifs, transitions...
+
+Atmosphere:
+mots-clés d'ambiance..."></textarea>
+          <div class="prompt-helper">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+            <span>Décrivez les scènes, le style visuel, les mouvements de caméra et l'ambiance souhaitée.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="target_audience">Audience cible <span class="required">*</span></label>
+          <input type="text" id="target_audience" name="target_audience" required placeholder="Ex: Femmes 25-45 ans, mode et luxe accessible">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="video_style">Style vidéo <span class="required">*</span></label>
+            <select id="video_style" name="video_style" required>
+              <option value="" disabled selected>Choisir...</option>
+              <option value="Moderne">Moderne</option>
+              <option value="Cinématique">Cinématique</option>
+              <option value="Lifestyle">Lifestyle</option>
+              <option value="Minimaliste">Minimaliste</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="duration_seconds">Durée <span class="required">*</span></label>
+            <select id="duration_seconds" name="duration_seconds" required>
+              <option value="" disabled selected>Choisir...</option>
+              <option value="4">4 secondes</option>
+              <option value="8">8 secondes</option>
+              <option value="12">12 secondes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Contact -->
+      <div class="form-section" style="margin-bottom: 0;">
+        <div class="form-section-title">Contact</div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="marketer_email">Votre email <span class="required">*</span></label>
+          <input type="email" id="marketer_email" name="marketer_email" required placeholder="votre@email.com">
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        Générer la Vidéo
+      </button>
+    </form>
+
+    <!-- Success -->
+    <div class="success-message" id="successMsg">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>Brief envoyé</h2>
+      <p>Votre publicité vidéo est en cours de génération.<br>Vous recevrez le résultat sous quelques minutes.</p>
+    </div>
+
+    <footer class="footer">
+      <p>Propulsé par <a href="#">Video Factory</a> &middot; Sora 2</p>
+    </footer>
+  </div>
+
+  <script>
+    const form = document.getElementById('videoForm');
+    const btn = document.getElementById('submitBtn');
+    const successMsg = document.getElementById('successMsg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      btn.textContent = 'Envoi en cours...';
+
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        await fetch(form.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+          mode: 'no-cors'
+        });
+
+        form.style.display = 'none';
+        successMsg.classList.add('visible');
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Générer la Vidéo';
+        alert('Erreur lors de l\'envoi. Veuillez réessayer.');
+      }
+    });
+  </script>
+</body>
+</html>
